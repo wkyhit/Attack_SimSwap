@@ -34,5 +34,8 @@ class TestOptions(BaseOptions):
         self.parser.add_argument('--no_simswaplogo', action='store_true', help='Remove the watermark')
         self.parser.add_argument('--use_mask', action='store_true', help='Use mask for better result')
         self.parser.add_argument('--crop_size', type=int, default=224, help='Crop of size of input image')
+        self.parser.add_argument("--source_dir", type=str, default='./inputs/source_imgs', help="source images path")
+        self.parser.add_argument("--target_dir", type=str, default='./inputs/target_imgs', help="target images path")
+
         
         self.isTrain = False
