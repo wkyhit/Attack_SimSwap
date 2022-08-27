@@ -22,6 +22,7 @@ class InstanceNorm(nn.Module):
         tmp = torch.rsqrt(torch.mean(tmp, (2, 3), True) + self.epsilon)
         return x * tmp
 
+#!!!Adain实现公式不一样？
 class ApplyStyle(nn.Module):
     """
         @ref: https://github.com/lernapparat/lernapparat/blob/master/style_gan/pytorch_style_gan.ipynb
@@ -35,6 +36,9 @@ class ApplyStyle(nn.Module):
         shape = [-1, 2, x.size(1), 1, 1]
         style = style.view(shape)    # [batch_size, 2, n_channels, ...]
         #x = x * (style[:, 0] + 1.) + style[:, 1]
+        
+        #!!!𝜹_s and µ_s are generated from latent vector v_s
+        # x is Feature with instance norm( (x-mean(x)) / std(x) )
         x = x * (style[:, 0] * 1 + 1.) + style[:, 1] * 1
         return x
 
@@ -92,8 +96,12 @@ class Generator_Adain_Upsample(nn.Module):
         activation = nn.ReLU(True)
         self.deep = deep
 
+        #ReflectionPad2d：对输入进行镜像填充，填充后的输入大小为：(输入大小+2*padding)
         self.first_layer = nn.Sequential(nn.ReflectionPad2d(3), nn.Conv2d(input_nc, 64, kernel_size=7, padding=0),
                                          norm_layer(64), activation)
+        """
+        Encoder: extract feature Feat_T from the target image
+        """
         ### downsample
         self.down1 = nn.Sequential(nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1),
                                    norm_layer(128), activation)
@@ -105,6 +113,10 @@ class Generator_Adain_Upsample(nn.Module):
             self.down4 = nn.Sequential(nn.Conv2d(512, 512, kernel_size=3, stride=2, padding=1),
                                        norm_layer(512), activation)
 
+        """
+        IIM: 9(n_blocks) x ID-Block
+        Transfers the identity information from source image into Feat_T
+        """
         ### resnet blocks
         BN = []
         for i in range(n_blocks):
@@ -112,6 +124,9 @@ class Generator_Adain_Upsample(nn.Module):
                 ResnetBlock_Adain(512, latent_size=latent_size, padding_type=padding_type, activation=activation)]
         self.BottleNeck = nn.Sequential(*BN)
 
+        """
+        Decoder: reconstruct the result image from Feat_T
+        """
         if self.deep:
             self.up4 = nn.Sequential(
                 nn.Upsample(scale_factor=2, mode='bilinear'),
@@ -136,6 +151,8 @@ class Generator_Adain_Upsample(nn.Module):
         self.last_layer = nn.Sequential(nn.ReflectionPad2d(3), nn.Conv2d(64, output_nc, kernel_size=7, padding=0),
                                         nn.Tanh())
 
+    #input=Target Image; 
+    #dlatents=Source Image Id vector v_s (latent code);
     def forward(self, input, dlatents):
         x = input  # 3*224*224
 
@@ -157,7 +174,7 @@ class Generator_Adain_Upsample(nn.Module):
         x = self.up2(x)
         x = self.up1(x)
         x = self.last_layer(x)
-        x = (x + 1) / 2
+        x = (x + 1) / 2 #！！！！why?
 
         return x
 

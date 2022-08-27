@@ -51,15 +51,15 @@ if __name__ == '__main__':
     model = create_model(opt)
     model.eval()
 
-    spNorm =SpecificNorm()
+    spNorm =SpecificNorm() #!!!作用是什么？
     app = Face_detect_crop(name='antelope', root='./insightface_func/models')
     app.prepare(ctx_id= 0, det_thresh=0.6, det_size=(640,640),mode=mode)
 
     with torch.no_grad():
-        pic_a = opt.pic_a_path
+        pic_a = opt.pic_a_path #source (identity) face
 
         img_a_whole = cv2.imread(pic_a)
-        img_a_align_crop, _ = app.get(img_a_whole,crop_size)
+        img_a_align_crop, _ = app.get(img_a_whole,crop_size)#face detect and crop
         img_a_align_crop_pil = Image.fromarray(cv2.cvtColor(img_a_align_crop[0],cv2.COLOR_BGR2RGB)) 
         img_a = transformer_Arcface(img_a_align_crop_pil)
         img_id = img_a.view(-1, img_a.shape[0], img_a.shape[1], img_a.shape[2])
@@ -69,16 +69,17 @@ if __name__ == '__main__':
 
         #create latent id
         img_id_downsample = F.interpolate(img_id, size=(112,112))
-        latend_id = model.netArc(img_id_downsample)
+        latend_id = model.netArc(img_id_downsample) #use Arcface to generate latent id
         latend_id = F.normalize(latend_id, p=2, dim=1)
 
 
         ############## Forward Pass ######################
 
-        pic_b = opt.pic_b_path
+        pic_b = opt.pic_b_path #target face
         img_b_whole = cv2.imread(pic_b)
 
-        img_b_align_crop_list, b_mat_list = app.get(img_b_whole,crop_size)
+        # there might be multiple faces in the target face
+        img_b_align_crop_list, b_mat_list = app.get(img_b_whole,crop_size)#face detect and crop
         # detect_results = None
         swap_result_list = []
 
@@ -88,7 +89,8 @@ if __name__ == '__main__':
 
             b_align_crop_tenor = _totensor(cv2.cvtColor(b_align_crop,cv2.COLOR_BGR2RGB))[None,...].cuda()
 
-            swap_result = model(None, b_align_crop_tenor, latend_id, None, True)[0]
+            #!!!!input id_vector, target face; output result image
+            swap_result = model(None, b_align_crop_tenor, latend_id, None, True)[0] 
             swap_result_list.append(swap_result)
             b_align_crop_tenor_list.append(b_align_crop_tenor)
 

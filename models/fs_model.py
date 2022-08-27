@@ -55,7 +55,8 @@ class fsModel(BaseModel):
         elif opt.crop_size == 512:
             from .fs_networks_512 import Generator_Adain_Upsample, Discriminator
 
-        # Generator network
+        # Generator network: consists of Encoder, IIM(ID_Block x 9) and Decoder
+
         self.netG = Generator_Adain_Upsample(input_nc=3, output_nc=3, latent_size=512, n_blocks=9, deep=False)
         self.netG.to(device)
 
@@ -84,8 +85,8 @@ class fsModel(BaseModel):
         self.netD1.to(device)
         self.netD2.to(device)
 
-        #
-        self.spNorm =SpecificNorm()
+        
+        self.spNorm =SpecificNorm() 
         self.downsample = nn.AvgPool2d(3, stride=2, padding=[1, 1], count_include_pad=False)
 
         # load networks
@@ -151,9 +152,10 @@ class fsModel(BaseModel):
         loss_D_fake, loss_D_real, loss_D_GP = 0, 0, 0
         loss_G_GAN, loss_G_GAN_Feat, loss_G_VGG, loss_G_ID, loss_G_Rec = 0,0,0,0,0
 
-        img_fake = self.netG.forward(img_att, latent_id)
-        if not self.isTrain:
+        img_fake = self.netG.forward(img_att, latent_id) #img_att = target face; latent_id = source id vector
+        if not self.isTrain:#for testing: ignore the code below
             return img_fake
+
         img_fake_downsample = self.downsample(img_fake)
         img_att_downsample = self.downsample(img_att)
 
