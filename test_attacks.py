@@ -45,7 +45,10 @@ if __name__ == '__main__':
 
     spNorm =SpecificNorm() #!!!作用是什么？
     app = Face_detect_crop(name='antelope', root='./insightface_func/models')
-    app.prepare(ctx_id= 0, det_thresh=0.6, det_size=(640,640),mode=mode)
+    # app.prepare(ctx_id= 0, det_thresh=0.6, det_size=(640,640),mode=mode)
+    #降低threshold，防止detect返回None
+    app.prepare(ctx_id= 0, det_thresh=0.1, det_size=(640,640),mode=mode)
+
 
     # with torch.no_grad():
     # pic_a = opt.pic_a_path #source (identity) face
@@ -76,7 +79,7 @@ if __name__ == '__main__':
         pic_a = source_list[i]
 
         img_a_whole = cv2.imread(pic_a)
-        img_a_whole = cv2.resize(img_a_whole, (640, 640))
+        # img_a_whole = cv2.resize(img_a_whole, (800, 800))
         # print(img_a_whole.shape)
         #!!!注意图片尺寸不能太大，否则会返回空值
         img_a_align_crop, _ = app.get(img_a_whole,crop_size)#face detect and crop
@@ -97,7 +100,7 @@ if __name__ == '__main__':
         for j in range(len(target_list)):
             pic_b = target_list[j]
             img_b_whole = cv2.imread(pic_b)
-            img_b_whole = cv2.resize(img_b_whole, (640, 640))
+            # img_b_whole = cv2.resize(img_b_whole, (800, 800))
 
             # there might be multiple faces in the target face
             img_b_align_crop_list, b_mat_list = app.get(img_b_whole,crop_size)#face detect and crop
