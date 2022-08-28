@@ -14,6 +14,8 @@ from util.add_watermark import watermark_image
 from util.norm import SpecificNorm
 from parsing_model.model import BiSeNet
 
+import latent_code_attack
+
 def lcm(a, b): return abs(a * b) / fractions.gcd(a, b) if a and b else 0
 
 transformer_Arcface = transforms.Compose([
@@ -101,6 +103,27 @@ if __name__ == '__main__':
         latend_id = model.netArc(img_id_downsample) #use Arcface to generate latent id
         latend_id = F.normalize(latend_id, p=2, dim=1) #[1,512]
 
+        """
+        latent code attack
+        """
+        # Initialize Metrics
+        l1_error, l2_error, min_dist, l0_error = 0.0, 0.0, 0.0, 0.0
+        n_dist, n_samples = 0, 0
+
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        y = latend_id.cpu().detach()
+
+        attack = latent_code_attack.IFGSMAttack(model, device=device)
+
+        #传入img_id作为原始X, y作为目标Y，返回攻击后的adv_img_id
+        adv_img_id,perturb = attack.perturb(img_id.clone().detach_(), y)
+
+        #根据adv_img_id提取出latend_id
+
+        adv_img_id_downsample = F.interpolate(adv_img_id, size=(112,112))
+        adv_latend_id = model.netArc(adv_img_id_downsample)
+        adv_latend_id = F.normalize(adv_latend_id, p=2, dim=1) #[1,512]
+
 
         ############## Forward Pass ######################
         for j in range(len(target_list)):
@@ -120,22 +143,30 @@ if __name__ == '__main__':
                 b_align_crop_tenor = _totensor(cv2.cvtColor(b_align_crop,cv2.COLOR_BGR2RGB))[None,...].cuda()
 
                 #!!!!input id_vector, target face; output result image
-                
                 swap_result = model(None, b_align_crop_tenor, latend_id, None, True)[0] #[3,224,224]
+                
                 swap_result_save = swap_result.cpu().detach().numpy()
                 # print("min:",np.min(swap_result_save),"max:",np.max(swap_result_save))
                 swap_result_save = swap_result_save.transpose(1,2,0)
                 swap_result_save = swap_result_save * 255
                 swap_result_save = swap_result_save.astype(np.uint8)
                 swap_result_save = cv2.cvtColor(swap_result_save,cv2.COLOR_RGB2BGR)
-
                 # print("swap_result shape:",swap_result.shape)
                 # ！！！临时保存swap_result，用于测试 ！！！
                 cv2.imwrite('/content/output/swap_result/{}.jpg'.format(idx),swap_result_save)
 
-
                 swap_result_list.append(swap_result)
                 b_align_crop_tenor_list.append(b_align_crop_tenor)
+
+                #生成adv_swap_result
+                adv_swap_result = model(None, b_align_crop_tenor, adv_latend_id, None, True)[0] #[3,224,224]
+                adv_swap_result_save = adv_swap_result.cpu().detach().numpy()
+                adv_swap_result_save = adv_swap_result_save.transpose(1,2,0)
+                adv_swap_result_save = adv_swap_result_save * 255
+                adv_swap_result_save = adv_swap_result_save.astype(np.uint8)
+                adv_swap_result_save = cv2.cvtColor(adv_swap_result_save,cv2.COLOR_RGB2BGR)
+                cv2.imwrite('/content/output/adv_swap_result/{}.jpg'.format(idx),adv_swap_result_save)
+
 
             if opt.use_mask:
                 n_classes = 19
