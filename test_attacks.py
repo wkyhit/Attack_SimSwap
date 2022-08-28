@@ -82,13 +82,16 @@ if __name__ == '__main__':
         # img_a_whole = cv2.resize(img_a_whole, (800, 800))
         # print(img_a_whole.shape)
 
-        img_a_align_crop, _ = app.get(img_a_whole,crop_size)#face detect and crop
+        # img_a_align_crop, _ = app.get(img_a_whole,crop_size)#face detect and crop
+        #new edit: 不需要detect，直接resize到224
+        img_a_align_crop = cv2.resize(img_a_whole, (224,224))
 
-        print("img_a_align_crop shape:",img_a_align_crop.shape)
+        # print("img_a_align_crop shape:",img_a_align_crop.shape)
         
-        img_a_align_crop_pil = Image.fromarray(cv2.cvtColor(img_a_align_crop[0],cv2.COLOR_BGR2RGB)) 
-        img_a = transformer_Arcface(img_a_align_crop_pil)
-        img_id = img_a.view(-1, img_a.shape[0], img_a.shape[1], img_a.shape[2])
+        # img_a_align_crop_pil = Image.fromarray(cv2.cvtColor(img_a_align_crop[0],cv2.COLOR_BGR2RGB))
+        img_a_align_crop_pil = Image.fromarray(cv2.cvtColor(img_a_align_crop,cv2.COLOR_BGR2RGB)) 
+        img_a = transformer_Arcface(img_a_align_crop_pil) #[3,224,224]
+        img_id = img_a.view(-1, img_a.shape[0], img_a.shape[1], img_a.shape[2]) #[1,3,224,224]
 
         # convert numpy to tensor
         img_id = img_id.cuda()
@@ -96,7 +99,7 @@ if __name__ == '__main__':
         #create latent id
         img_id_downsample = F.interpolate(img_id, size=(112,112))
         latend_id = model.netArc(img_id_downsample) #use Arcface to generate latent id
-        latend_id = F.normalize(latend_id, p=2, dim=1)
+        latend_id = F.normalize(latend_id, p=2, dim=1) #[1,512]
 
 
         ############## Forward Pass ######################
@@ -113,13 +116,23 @@ if __name__ == '__main__':
             b_align_crop_tenor_list = []
 
             for b_align_crop in img_b_align_crop_list:
-
+                #b_align_crop shape: [224,224,3]
                 b_align_crop_tenor = _totensor(cv2.cvtColor(b_align_crop,cv2.COLOR_BGR2RGB))[None,...].cuda()
 
                 #!!!!input id_vector, target face; output result image
-                swap_result = model(None, b_align_crop_tenor, latend_id, None, True)[0]
+                
+                swap_result = model(None, b_align_crop_tenor, latend_id, None, True)[0] #[3,224,224]
+                swap_result_save = swap_result.cpu().detach().numpy()
+                # print("min:",np.min(swap_result_save),"max:",np.max(swap_result_save))
+                swap_result_save = swap_result_save.transpose(1,2,0)
+                swap_result_save = swap_result_save * 255
+                swap_result_save = swap_result_save.astype(np.uint8)
+                swap_result_save = cv2.cvtColor(swap_result_save,cv2.COLOR_RGB2BGR)
 
-                print("swap_result shape:",swap_result.shape)
+                # print("swap_result shape:",swap_result.shape)
+                # ！！！临时保存swap_result，用于测试 ！！！
+                cv2.imwrite('/content/output/swap_result/{}.jpg'.format(idx),swap_result_save)
+
 
                 swap_result_list.append(swap_result)
                 b_align_crop_tenor_list.append(b_align_crop_tenor)
@@ -139,6 +152,6 @@ if __name__ == '__main__':
                 os.path.join(opt.output_path, '{}.jpg'.format(idx)), opt.no_simswaplogo,pasring_model =net,use_mask=opt.use_mask, norm = spNorm)
 
             print(' ')
-            print('************ Done ! ************')
+            print("processing {}/{}".format(idx, len(source_list)*len(target_list)))
 
             idx += 1
