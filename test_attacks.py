@@ -81,8 +81,11 @@ if __name__ == '__main__':
         img_a_whole = cv2.imread(pic_a)
         # img_a_whole = cv2.resize(img_a_whole, (800, 800))
         # print(img_a_whole.shape)
-        #!!!注意图片尺寸不能太大，否则会返回空值
+
         img_a_align_crop, _ = app.get(img_a_whole,crop_size)#face detect and crop
+
+        print("img_a_align_crop shape:",img_a_align_crop.shape)
+        
         img_a_align_crop_pil = Image.fromarray(cv2.cvtColor(img_a_align_crop[0],cv2.COLOR_BGR2RGB)) 
         img_a = transformer_Arcface(img_a_align_crop_pil)
         img_id = img_a.view(-1, img_a.shape[0], img_a.shape[1], img_a.shape[2])
@@ -114,7 +117,10 @@ if __name__ == '__main__':
                 b_align_crop_tenor = _totensor(cv2.cvtColor(b_align_crop,cv2.COLOR_BGR2RGB))[None,...].cuda()
 
                 #!!!!input id_vector, target face; output result image
-                swap_result = model(None, b_align_crop_tenor, latend_id, None, True)[0] 
+                swap_result = model(None, b_align_crop_tenor, latend_id, None, True)[0]
+
+                print("swap_result shape:",swap_result.shape)
+
                 swap_result_list.append(swap_result)
                 b_align_crop_tenor_list.append(b_align_crop_tenor)
 
