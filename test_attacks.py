@@ -23,6 +23,15 @@ transformer_Arcface = transforms.Compose([
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
 
+inverse_transformer = transforms.Compose([ transforms.Normalize(mean = [ 0., 0., 0. ],
+                                                     std = [ 1/0.229, 1/0.224, 1/0.225 ]),
+                                transforms.Normalize(mean = [ -0.485, -0.456, -0.406 ],
+                                                     std = [ 1., 1., 1. ]),
+                               ])
+
+
+
+
 def _totensor(array):
     tensor = torch.from_numpy(array)
     img = tensor.transpose(0, 1).transpose(0, 2).contiguous()
@@ -81,21 +90,23 @@ if __name__ == '__main__':
         pic_a = source_list[i]
 
         img_a_whole = cv2.imread(pic_a)
-        # img_a_whole = cv2.resize(img_a_whole, (800, 800))
         # print(img_a_whole.shape)
 
         # img_a_align_crop, _ = app.get(img_a_whole,crop_size)#face detect and crop
-        #new edit: 不需要detect，直接resize到224
+        
+        #！！！new edit: 不需要detect，直接resize到224
         img_a_align_crop = cv2.resize(img_a_whole, (224,224))
 
         # print("img_a_align_crop shape:",img_a_align_crop.shape)
         
         # img_a_align_crop_pil = Image.fromarray(cv2.cvtColor(img_a_align_crop[0],cv2.COLOR_BGR2RGB))
         img_a_align_crop_pil = Image.fromarray(cv2.cvtColor(img_a_align_crop,cv2.COLOR_BGR2RGB)) 
-        img_a = transformer_Arcface(img_a_align_crop_pil) #[3,224,224]
+        # img_a = transformer_Arcface(img_a_align_crop_pil) #[3,224,224]
+        
+        #不进行transform normalize, 直接转换为tensor
+        img_a = transforms.ToTensor()(img_a_align_crop_pil)
         img_id = img_a.view(-1, img_a.shape[0], img_a.shape[1], img_a.shape[2]) #[1,3,224,224]
 
-        # convert numpy to tensor
         img_id = img_id.cuda()
 
         #create latent id
@@ -118,11 +129,40 @@ if __name__ == '__main__':
         #传入img_id作为原始X, y作为目标Y，返回攻击后的adv_img_id
         adv_img_id,perturb = attack.perturb(img_id.clone().detach_(), y)
 
-        #根据adv_img_id提取出latend_id
-
+        #根据adv_img_id提取出adv_latend_id
         adv_img_id_downsample = F.interpolate(adv_img_id, size=(112,112))
         adv_latend_id = model.netArc(adv_img_id_downsample)
         adv_latend_id = F.normalize(adv_latend_id, p=2, dim=1) #[1,512]
+
+
+
+        #******保存img_id******
+        img_id_np = img_id.cpu().detach()
+        img_id_np = img_id_np[0] #[3,224,224]
+        # img_id_np = inverse_transformer(img_id_np)
+        img_id_np = img_id_np.numpy()
+        img_id_np = np.transpose(img_id_np,(1,2,0)) #[224,224,3]
+        # print("min(img_id_np):",img_id_np.min())
+        # print("max(img_id_np):",img_id_np.max())
+        img_id_np = img_id_np*255
+        img_id_np = img_id_np.astype(np.uint8)
+        img_id_np = cv2.cvtColor(img_id_np,cv2.COLOR_RGB2BGR)
+        cv2.imwrite('/content/output/ori_source/{}.jpg'.format(idx),img_id_np)
+
+
+
+        #******保存adv_img_id******
+        adv_img_id_pil = adv_img_id.cpu().detach() #[1,3,224,224]
+        adv_img_id_pil = adv_img_id_pil[0] # [3,224,224]
+        # adv_img_id_pil = inverse_transformer(adv_img_id_pil)
+        adv_img_id_pil = adv_img_id_pil.numpy()
+        adv_img_id_pil = np.transpose(adv_img_id_pil,(1,2,0)) #[224,224,3]
+        # print("min(adv_img_id_pil):",adv_img_id_pil.min())
+        # print("max(adv_img_id_pil):",adv_img_id_pil.max())
+        adv_img_id_pil = adv_img_id_pil*255
+        adv_img_id_pil = adv_img_id_pil.astype(np.uint8)
+        adv_img_id_pil = cv2.cvtColor(adv_img_id_pil,cv2.COLOR_RGB2BGR)
+        cv2.imwrite('/content/output/adv_source/{}.jpg'.format(idx),adv_img_id_pil)
 
 
         ############## Forward Pass ######################
