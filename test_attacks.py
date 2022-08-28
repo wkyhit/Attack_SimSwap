@@ -207,6 +207,12 @@ if __name__ == '__main__':
                 adv_swap_result_save = cv2.cvtColor(adv_swap_result_save,cv2.COLOR_RGB2BGR)
                 cv2.imwrite('/content/output/adv_swap_result/{}.jpg'.format(idx),adv_swap_result_save)
 
+            #保存target图片
+            img_b_whole_save = img_b_whole.copy()
+            img_b_whole_save = cv2.resize(img_b_whole_save, (224, 224))
+            cv2.imwrite('/content/output/target/{}.jpg'.format(idx),img_b_whole_save)
+
+            
 
             if opt.use_mask:
                 n_classes = 19
