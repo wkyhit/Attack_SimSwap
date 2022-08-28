@@ -179,7 +179,7 @@ if __name__ == '__main__':
                 attack = target_attack.IFGSMAttack(model, device=device)
 
                 #传入img_id作为原始X, y作为目标Y，返回攻击后的adv_img_id
-                adv_img_id,perturb = attack.perturb(img_id.clone().detach_(), y,b_align_crop_tenor.clone().detach_(),latend_id.clone().detach_())
+                adv_img_id,perturb = attack.perturb(img_id.clone().detach_(), y,b_align_crop_tenor.clone().detach_())
 
                 #根据adv_img_id提取出adv_latend_id
                 adv_img_id_downsample = F.interpolate(adv_img_id, size=(112,112))
