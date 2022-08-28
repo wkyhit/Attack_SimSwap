@@ -69,12 +69,16 @@ if __name__ == '__main__':
     #排序保证每次运行顺序一致
     source_list.sort()
     target_list.sort()
+    
 
     idx = 1
     for i in range(len(source_list)):
         pic_a = source_list[i]
 
         img_a_whole = cv2.imread(pic_a)
+        img_a_whole = cv2.resize(img_a_whole, (640, 640))
+        # print(img_a_whole.shape)
+        #!!!注意图片尺寸不能太大，否则会返回空值
         img_a_align_crop, _ = app.get(img_a_whole,crop_size)#face detect and crop
         img_a_align_crop_pil = Image.fromarray(cv2.cvtColor(img_a_align_crop[0],cv2.COLOR_BGR2RGB)) 
         img_a = transformer_Arcface(img_a_align_crop_pil)
@@ -93,6 +97,7 @@ if __name__ == '__main__':
         for j in range(len(target_list)):
             pic_b = target_list[j]
             img_b_whole = cv2.imread(pic_b)
+            img_b_whole = cv2.resize(img_b_whole, (640, 640))
 
             # there might be multiple faces in the target face
             img_b_align_crop_list, b_mat_list = app.get(img_b_whole,crop_size)#face detect and crop
