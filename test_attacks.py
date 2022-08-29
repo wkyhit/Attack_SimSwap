@@ -94,8 +94,8 @@ if __name__ == '__main__':
 
         # img_a_align_crop, _ = app.get(img_a_whole,crop_size)#face detect and crop
         
-        #！！！new edit: 不需要detect，直接resize到224
-        img_a_align_crop = cv2.resize(img_a_whole, (224,224))
+        #！！！new edit: 不需要detect，直接resize到crop_size
+        img_a_align_crop = cv2.resize(img_a_whole, (crop_size,crop_size))
 
         # print("img_a_align_crop shape:",img_a_align_crop.shape)
         
