@@ -213,7 +213,7 @@ if __name__ == '__main__':
 
             #保存target图片
             img_b_whole_save = img_b_whole.copy()
-            img_b_whole_save = cv2.resize(img_b_whole_save, (224, 224))
+            img_b_whole_save = cv2.resize(img_b_whole_save, (crop_size, crop_size))
             cv2.imwrite('/content/output/target/{}.jpg'.format(idx),img_b_whole_save)
 
             
@@ -231,6 +231,12 @@ if __name__ == '__main__':
             # 将换脸结果替换回 target image中得到result image
             reverse2wholeimage(b_align_crop_tenor_list, swap_result_list, b_mat_list, crop_size, img_b_whole, logoclass, \
                 os.path.join(opt.output_path, '{}.jpg'.format(idx)), opt.no_simswaplogo,pasring_model =net,use_mask=opt.use_mask, norm = spNorm)
+
+            
+            # 将adv_swap_result替换回 target image中得到adversarial result image
+            reverse2wholeimage(b_align_crop_tenor_list, [adv_swap_result], b_mat_list, crop_size, img_b_whole, logoclass, \
+                os.path.join(opt.adv_output_path, '{}.jpg'.format(idx)), opt.no_simswaplogo,pasring_model =net,use_mask=opt.use_mask, norm = spNorm)
+
 
             print(' ')
             print("processing {}/{}".format(idx, len(source_list)*len(target_list)))
