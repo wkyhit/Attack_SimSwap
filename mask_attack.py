@@ -55,7 +55,7 @@ class IFGSMAttack(object):
             img_id_downsample = F.interpolate(X_nat, size=(112,112))
             latend_id = self.model.netArc(img_id_downsample) #攻击对象：latend_id
             latend_id = F.normalize(latend_id, p=2, dim=1)
-            output = self.model(None, target_img, latend_id, None, True)[0] #[3,224,224]
+            output = self.model(None, target_img, latend_id, None, True) #[1,3,224,224]
             
 
             self.model.netArc.zero_grad() #梯度清零?

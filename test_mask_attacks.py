@@ -162,8 +162,8 @@ if __name__ == '__main__':
                 # ！！！保存swap_result ！！！
                 cv2.imwrite('/content/output/swap_result/{}.jpg'.format(idx),swap_result_save)
 
-                # swap_result_list.append(swap_result)
-                # b_align_crop_tenor_list.append(b_align_crop_tenor)
+                swap_result_list.append(swap_result[0])
+                b_align_crop_tenor_list.append(b_align_crop_tenor)
 
 
 
@@ -226,7 +226,6 @@ if __name__ == '__main__':
             img_b_whole_save = cv2.resize(img_b_whole_save, (crop_size, crop_size))
             cv2.imwrite('/content/output/target/{}.jpg'.format(idx),img_b_whole_save)
 
-            
 
             if opt.use_mask:
                 n_classes = 19
