@@ -70,10 +70,17 @@ class IFGSMAttack(object):
 
             # Minus in the loss means "towards" and plus means "away from"
             # use mse loss
-            loss = self.loss_fn(output, y)
+            # loss = self.loss_fn(output, y)
 
             # loss = ((output - y)**2).sum() #self_defined loss
             # loss = loss.mean()
+
+            #use l1 loss
+            # loss = self.loss_fn2(output, y)
+
+            # nullfying attack with mse loss
+            loss = -1*((output-origin_img_src)**2).sum()
+            loss = loss.mean()
 
             loss.requires_grad_(True) #!!解决无grad bug
             loss.backward()
