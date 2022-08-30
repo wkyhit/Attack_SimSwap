@@ -79,7 +79,8 @@ class IFGSMAttack(object):
             # loss = self.loss_fn2(output, y)
 
             # nullfying attack with mse loss
-            loss = -1*((output-origin_img_src)**2).sum()
+            # loss = -1*((output-origin_img_src)**2).sum()
+            loss = -1*((output-target_img)**2).sum()
             loss = loss.mean()
 
             loss.requires_grad_(True) #!!解决无grad bug
