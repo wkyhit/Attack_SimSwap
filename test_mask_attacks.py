@@ -14,7 +14,7 @@ from util.add_watermark import watermark_image
 from util.norm import SpecificNorm
 from parsing_model.model import BiSeNet
 
-import target_attack
+import mask_attack
 
 def lcm(a, b): return abs(a * b) / fractions.gcd(a, b) if a and b else 0
 
@@ -185,7 +185,7 @@ if __name__ == '__main__':
                 mask[mask>=0.5] = 1
                 mask[mask<0.5] = 0
 
-                attack = target_attack.IFGSMAttack(model, device=device,mask=mask)
+                attack = mask_attack.IFGSMAttack(model, device=device,mask=mask)
 
 
                 #传入img_id作为原始X, y作为目标Y，返回攻击后的adv_img_id
