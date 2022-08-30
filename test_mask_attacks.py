@@ -226,6 +226,15 @@ if __name__ == '__main__':
             img_b_whole_save = cv2.resize(img_b_whole_save, (crop_size, crop_size))
             cv2.imwrite('/content/output/target/{}.jpg'.format(idx),img_b_whole_save)
 
+            #保存mask后的target图片
+            mask_target = mask.cpu().detach()
+            mask_target = mask_target*b_align_crop_tenor.cpu().detach()[0]
+            mask_target = mask_target.numpy()
+            mask_save = np.transpose(mask_target,(1,2,0)) #[224,224,3]
+            mask_save = mask_save*255
+            mask_save = mask_save.astype(np.uint8)
+            mask_save = cv2.cvtColor(mask_save,cv2.COLOR_RGB2BGR)
+            cv2.imwrite('/content/output/mask/{}.jpg'.format(idx),mask_save)
 
             if opt.use_mask:
                 n_classes = 19
