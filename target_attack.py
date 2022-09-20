@@ -4,6 +4,10 @@ from collections import Iterable
 from scipy.stats import truncnorm
 import torch.nn.functional as F
 
+from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
+from torchmetrics import MultiScaleStructuralSimilarityIndexMeasure
+from torchmetrics import PeakSignalNoiseRatio
+
 import torch
 import torch.nn as nn
 
@@ -22,6 +26,9 @@ class IFGSMAttack(object):
         self.a = a
         self.loss_fn = nn.MSELoss().to(device)
         self.loss_fn2 = nn.L1Loss().to(device)
+        self.lpips = LearnedPerceptualImagePatchSimilarity(net_type='vgg').to("cuda")
+        self.ms_ssim = MultiScaleStructuralSimilarityIndexMeasure().to("cuda")
+        self.psnr = PeakSignalNoiseRatio()
         self.device = device
         self.mask = mask
 
@@ -80,8 +87,17 @@ class IFGSMAttack(object):
 
             # nullfying attack with mse loss
             # loss = -1*((output-origin_img_src)**2).sum()
-            loss = -1*((output-target_img)**2).sum()
-            loss = loss.mean()
+            # loss = -1*((output-target_img)**2).sum()
+            # loss = loss.mean()
+
+            # use lpips loss: a low lpips loss means the two images are perceptual similar
+            loss = self.lpips(output, y)
+            
+            #use ms_ssim loss: a hight ms_ssim loss means the two images are structure similar
+            # loss = -1*self.ms_ssim(output, y)
+
+            #use psnr loss: a high psnr loss means 
+            # loss = -self.psnr(output, y)
 
             loss.requires_grad_(True) #!!解决无grad bug
             loss.backward()
