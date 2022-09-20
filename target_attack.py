@@ -91,13 +91,13 @@ class IFGSMAttack(object):
             # loss = loss.mean()
 
             # use lpips loss: a low lpips loss means the two images are perceptual similar
-            loss = self.lpips(output, y)
+            loss = self.lpips(output.unsqueeze(0), y.unsqueeze(0))
             
             #use ms_ssim loss: a hight ms_ssim loss means the two images are structure similar
-            # loss = -1*self.ms_ssim(output, y)
+            # loss = -1*self.ms_ssim(output.unsqueeze(0), y.unsqueeze(0))
 
             #use psnr loss: a high psnr loss means 
-            # loss = -self.psnr(output, y)
+            # loss = -self.psnr(output.unsqueeze(0), y.unsqueeze(0))
 
             loss.requires_grad_(True) #!!解决无grad bug
             loss.backward()
