@@ -12,7 +12,7 @@ import torch
 import torch.nn as nn
 
 class IFGSMAttack(object):
-    def __init__(self, model=None, device=None,mask=None, epsilon=0.05, k=100, a=0.01):
+    def __init__(self, model=None, device=None,mask=None, epsilon=0.05, k=50, a=0.01):
         """
         FGSM, I-FGSM and PGD attacks
         epsilon: magnitude of attack
@@ -28,7 +28,7 @@ class IFGSMAttack(object):
         self.loss_fn2 = nn.L1Loss().to(device)
         self.lpips = LearnedPerceptualImagePatchSimilarity(net_type='vgg').to("cuda")
         self.ms_ssim = MultiScaleStructuralSimilarityIndexMeasure().to("cuda")
-        self.psnr = PeakSignalNoiseRatio()
+        self.psnr = PeakSignalNoiseRatio().to("cuda")
         self.device = device
         self.mask = mask
 
